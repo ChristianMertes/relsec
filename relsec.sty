@@ -1,0 +1,127 @@
+% Relative Sectioning package by Christian Leichsenring <cleichsenring@techfak.uni-bielefeld.de>
+% Some code stolen from http://stackoverflow.com/questions/2066119/relative-section-specification
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{relsec}[2011/11/16 v0.2 Relative Sectioning]
+
+\newcounter{section-level}
+\newcommand*{\gotochapterlevel}{\setcounter{section-level}{0}}
+\AtEndOfPackage{\gotochapterlevel}
+
+\makeatletter
+\newcounter{minimum-section-level@relsec}
+\newcounter{maximum-section-level@relsec}
+\ifdefined\book
+  \setcounter{minimum-section-level@relsec}{-2}
+\else % TODO: we should be able to use part even when chapter is not defined
+  \ifdefined\chapter
+    \setcounter{minimum-section-level@relsec}{0}
+  \else
+    \setcounter{minimum-section-level@relsec}{1}
+    \renewcommand*{\gotochapterlevel}{\setcounter{section-level}{1}}
+    \def\gotosectionlevel{\gotochapterlevel}
+  \fi
+\fi
+\ifdefined\paragraph
+  \setcounter{maximum-section-level@relsec}{4}
+  \def\levelfoursection@relsec{\paragraph}
+\else
+  \ifdefined\subsubsubsection
+    \setcounter{maximum-section-level@relsec}{4}
+    \def\levelfoursection@relsec{\subsubsubsection}
+  \fi
+\fi
+\ifdefined\subparagraph
+  \setcounter{maximum-section-level@relsec}{5}
+  \def\levelfivesection@relsec{\subparagraph}
+\else
+  \ifdefined\subsubsubsubsection
+    \setcounter{maximum-section-level@relsec}{5}
+    \def\levelfivesection@relsec{\subsubsubsubsection}
+  \fi
+\fi
+\ifdefined\subsubparagraph
+  \setcounter{maximum-section-level@relsec}{6}
+  \def\levelsixsection@relsec{\subsubparagraph}
+\fi
+\makeatother
+
+\newcommand*{\leveldown}[1][1]{\addtocounter{section-level}{#1}}
+\newcommand*{\levelup}[1][1]{\addtocounter{section-level}{-#1}}
+
+\RequirePackage{ifthen}
+\RequirePackage{xparse}
+
+\makeatletter
+\DeclareDocumentCommand\dynsection{ s o o m }{% #1=toc entry (optional), #2=page header title (optional), #3=heading
+   \ifthenelse{\value{section-level} < \value{minimum-section-level@relsec}}{%\setcounter{section-level}{\value{minimum-section-level@relsec}}
+    \PackageError{relsec}{Section level beyond the highest level}{The section level you asked for using \protect\levelup\space is not available. You can continue but the section won't be used.}}{%
+   \ifthenelse{\value{section-level} > \value{maximum-section-level@relsec}}{%\setcounter{section-level}{\value{maximum-section-level@relsec}}
+    \PackageError{relsec}{Subsection nesting too deep}{The section level you asked for using \protect\leveldown\space is not available. You can continue but the section won't be used.}}{%
+  }%
+  \IfBooleanTF #1 {% \dynsection* (starred)
+   \IfNoValueF{#2}{\PackageWarning{relsec}{\protect\dynsection*\space takes no optional arguments}}%
+   \ifthenelse{\equal{\value{section-level}}{0}}{\chapter*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{1}}{\section*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{2}}{\subsection*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{3}}{\subsubsection*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{4}}{\levelfoursection@relsec*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{5}}{\levelfivesection@relsec*{#4}}{%
+   \ifthenelse{\equal{\value{section-level}}{6}}{\levelsixsection@relsec*{#4}}{%
+   }}}}}}}%
+  }{% \dynsection (unstarred)
+  \ifthenelse{\equal{\value{section-level}}{0}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\chapter{#4}}{\chapter[#2]{#4}}}{\chapter[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{1}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\section{#4}}{\section[#2]{#4}}}{\section[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{2}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\subsection{#4}}{\subsection[#2]{#4}}}{\subsection[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{3}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\subsubsection{#4}}{\subsubsection[#2]{#4}}}{\subsubsection[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{4}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\levelfoursection@relsec{#4}}{\levelfoursection@relsec[#2]{#4}}}{\levelfoursection@relsec[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{5}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\levelfivesection@relsec{#4}}{\levelfivesection@relsec[#2]{#4}}}{\levelfivesection@relsec[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{6}}{\IfNoValueTF{#3}{\IfNoValueTF{#2}{\levelsixsection@relsec{#4}}{\levelsixsection@relsec[#2]{#4}}}{\levelsixsection@relsec[#2][#3]{#4}}}{%
+   \ifthenelse{\equal{\value{section-level}}{-2}}{\book{#4}\IfNoValueF{#2}{\PackageWarning{relsec}{TOC entry for book section level ignored}}\IfNoValueF{#3}{\PackageWarning{relsec}{Page header title for book section level ignored}}}{%
+   \ifthenelse{\equal{\value{section-level}}{-1}}{\part{#4}\IfNoValueF{#2}{\PackageWarning{relsec}{TOC entry for part section level ignored}}\IfNoValueF{#3}{\PackageWarning{relsec}{Page header title for part section level ignored}}}{}%
+   }}}}}}}}}%
+}}
+\makeatother
+
+\newenvironment{asection}[2][\defopt]{% #1=toc entry (optional), #2=heading
+  \def\defopt{#2}%
+  \dynsection[#1]{#2}%
+  \leveldown%
+}{%
+  \levelup%
+}%
+
+\newcommand*{\TestRelativeSectioning}{% Produces errors, warnings and broken output depending on the documentclass
+\makeatletter
+Testing relative sectioning (starting section level is \arabic{section-level} with minimum level \arabic{minimum-section-level@relsec} and maximum level \arabic{maximum-section-level@relsec}):
+\makeatother
+\dynsection[Chapter 1 TOC][On a completely unrelated note~\ldots]{Should be a chapter}
+\leveldown\dynsection{Should be a section}
+\leveldown\dynsection{Should be a subsection}
+\dynsection[This subsection title should appear in the TOC only]{Should be another subsection}
+\levelup\dynsection*{Should be a section again but without numbers}
+\leveldown\leveldown\dynsection{Should be a subsubsection}
+\dynsection*{Should be a starred subsubsection}
+\leveldown\dynsection{Should be a paragraph} You normally need some text in a paragraph.
+\dynsection*{This is a starred paragraph} Text again. Doesn't look so weird then.
+\leveldown\dynsection{Should be a subparagraph} A subparagraph also needs text.
+\dynsection*{A starred subparagraph} Whatever you need that for.
+No section header between this
+\leveldown\dynsection{A subsubparagraph produces an error message mostly}
+and this.
+\gotochapterlevel\dynsection*{Second chapter. Starred.}
+\levelup\dynsection{We have a part now}
+\levelup\dynsection{Wow, a book.}
+Again, nothing should be between this
+\levelup\dynsection{Another error}
+and this.
+\gotochapterlevel\leveldown[2]\dynsection*[bogus optional argument]{Subsection without numbering}
+\leveldown\levelup[2]\dynsection{Jumpy section}
+\begin{asection}{Almost final section}
+ section content
+\begin{asection}{A final subsection}
+ final subsection content
+\end{asection}
+\end{asection}
+\dynsection{The final section}
+}
