@@ -2,6 +2,7 @@ relsec
 ======
 
 Relative sectioning package for LaTeX
+-------------------------------------
 
 This is a relative sectionining package for LaTeX.
 The normal LaTeX sectioning commands like `\section`,
