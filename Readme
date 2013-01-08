@@ -36,3 +36,7 @@ probably millions of combination of existing and non-existing
 sectioning commands in various document classes and is
 known not to make use of packages that provide new sectioning
 commands such as \subsubsubsection.
+
+The \TestRelativeSectioning macro is likely to produce one or more
+error messages which is intended (testing the error messages, too)
+and can just be skipped.
