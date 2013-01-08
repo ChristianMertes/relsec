@@ -30,3 +30,9 @@ question on Stackoverflow which I found when I was fed up
 from having to change my sectioning commands all the time
 due to constant restructuring of my text.
 http://stackoverflow.com/questions/2066119/relative-section-specification
+
+The code is still crude and hasn't been tested with the
+probably millions of combination of existing and non-existing
+sectioning commands in various document classes and is
+known not to make use of packages that provide new sectioning
+commands such as \subsubsubsection.
